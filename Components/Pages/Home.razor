@@ -1,7 +1,106 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
+<h1>¡Nuestra Selecci&oacute;n de Pizzas!</h1>
 
-<h1>Hello, world!</h1>
+@foreach (var pizza in _estado.Menu.Pizzas)
+{
+	<div class="row">
+		<div class="col"> @pizza.Nombre </div>
+		<div class="col text-right"> @($"{pizza.Precio:0.00}") </div>
+		<div class="col"></div>
+		<div class="col">
+			<img src="@ImagenPicantes(pizza.Picante)" alt="@pizza.Picante" />
+		</div>
+		<div class="col">
+			<button class="btn btn-success pl-4 pr-4" @onclick="@(() => AgregarAlCarrito(pizza))">Agregar</button>
+		</div>
+	</div>
+}
 
-Welcome to your new app.
+@if (_estado.Carrito.Pedidos.Any())
+{
+	<h1 class="">¡Tu Orden!</h1>
+	@foreach (var (pizza, pos) in _estado.Carrito.Pedidos.Select(
+										(id, pos) => (_estado.Menu.ObtenerPizza(id), pos)))
+	{
+		<div class="row mb-2">
+			<div class="col">
+				@pizza.Nombre
+			</div>
+			<div class="col text-right">
+				@($"{pizza.Precio:0.00}")
+			</div>
+			<div class="col"></div>
+			<div class="col"></div>
+			<div class="col">
+				<button class="btn btn-danger" @onclick="@(() => RemoverDelCarrito(pos))">Remover</button>
+			</div>
+		</div>
+	}
+	<div class="row">
+		<div class="col"></div>
+		<div class="col"><hr /></div>
+		<div class="col"> </div>
+		<div class="col"> </div>
+	</div>
+	<div class="row">
+		<div class="col"> Total:</div>
+		<div class="col text-right font-weight-bold"> @($"{_estado.PrecioTotal:0.00}") </div>
+		<div class="col"> </div>
+		<div class="col"> </div>
+		<div class="col"> </div>
+	</div>
+}
+
+<h1 class="mt-2 mb-2">Por favor ingrese sus datos</h1>
+<EditForm Model="_estado.Carrito.Cliente" OnValidSubmit="RealizarPedido">
+	<DataAnnotationsValidator />
+	<fieldset>
+		<div class="row mb-2">
+			<label for="nombre">Nombre:</label>
+			<div class="col-4">
+				<InputText class="form-control" @bind-Value="_estado.Carrito.Cliente.Nombre" />
+				<ValidationMessage For="@(() => _estado.Carrito.Cliente.Nombre)" />
+			</div>
+		</div>
+		<div class="row mb-2">
+			<label for="calle">Calle:</label>
+			<div class="col-4">
+				<InputText class="form-control" @bind-Value="_estado.Carrito.Cliente.Calle" />
+				<ValidationMessage For="@(() => _estado.Carrito.Cliente.Calle)" />
+			</div>
+		</div>
+		<div class="row mb-2">
+			<label for="ciudad">Ciudad:</label>
+			<div class="col-4">
+				<InputText class="form-control" @bind-Value="_estado.Carrito.Cliente.Ciudad" />
+				<ValidationMessage For="@(() => _estado.Carrito.Cliente.Ciudad)" />
+			</div>
+		</div>
+		<div class="row mb-2">
+			<button class="mx-auto w-25 btn btn-success" @onclick="RealizarPedido">Confirmar</button>
+		</div>
+	</fieldset>
+</EditForm>
+
+@code {
+	private Estado _estado { get; } = new Estado();
+
+	protected override void OnInitialized()
+	{
+		_estado.Menu.Agregar(new Pizza(1, "Pepperoni", 8.99M, Picantes.Picante));
+		_estado.Menu.Agregar(new Pizza(2, "Margarita", 7.99M, Picantes.Ninguno));
+		_estado.Menu.Agregar(new Pizza(3, "Diabolo", 9.99M, Picantes.MuyPicante));
+	}
+
+	private string ImagenPicantes(Picantes picantes) => $"images/{picantes.ToString().ToLower()}.png";
+
+	private void AgregarAlCarrito(Pizza pizza) => _estado.Carrito.Agregar(pizza.Id);
+	private void RemoverDelCarrito(int pos) => _estado.Carrito.Remover(pos);
+
+	private void RealizarPedido()
+	{
+		Console.WriteLine("Realizando Pedido");
+	}
+}
